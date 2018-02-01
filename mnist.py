@@ -206,9 +206,9 @@ def main():
     simulation = Simulation(sampling_methods, num_queries_list, iter_num, data_name='MNIST original')
 
     for classifier_type in classifier_types:
-        plt_name = 'MNIST {0} iter_num:{1} classifier_type:{2} committee_number:{3}.jpg'.format('all', iter_num,
+        plt_name = 'MNIST {0} iter_num:{1} classifier_type:{2} committee_number:{3}{4}.jpg'.format('all', iter_num,
                                                                                                 classifier_type,
-                                                                                                committee_number)
+                                                                                                committee_number,'Debug'*DEBUG)
         simulation.simulate(plt_name=plt_name, classifier_type=classifier_type, committee_number=committee_number)
 
 
