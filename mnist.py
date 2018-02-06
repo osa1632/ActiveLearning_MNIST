@@ -31,9 +31,8 @@ def main():
     '''
 
 
-    sampling_methods = {'random': (0, 0),'average_kl_divergence': (1, None), 'least_confident': (0, 1),
-                        'centers_confidence_pca': (0, 0),
-                        }
+    sampling_methods = { 'random': (0, 0),'average_kl_divergence': (1, None), 'least_confident': (0, 1),
+                         'centers_confidence_pca': (0, 0) }
 
     num_queries_list_acc = [int(ii) for ii in np.linspace(50,500,4)]
     if DEBUG:
@@ -44,7 +43,7 @@ def main():
         num_queries_list += [num_queries_list_acc[ii] - num_queries_list_acc[ii - 1]]
 
     committee_numbers = [5,10,21]
-    iter_num = 5
+    iter_num = 10
     classifier_types = ['LR','CNN']
 
     if DEBUG:
@@ -57,7 +56,7 @@ def main():
             plt_name = 'MNIST {0} iter_num:{1} classifier_type:{2} committee_number:{3}{4}.jpg'.format('all', iter_num,
                                                                                                 classifier_type,
                                                                                                 committee_number,' Debug'*DEBUG)
-        simulation.simulate(plt_name=plt_name, classifier_type=classifier_type, committee_number=committee_number)
+            simulation.simulate(plt_name=plt_name, classifier_type=classifier_type, committee_number=committee_number)
 
 
 if __name__ == '__main__':
