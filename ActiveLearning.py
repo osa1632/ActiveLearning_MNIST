@@ -42,17 +42,22 @@ class ActiveLearning(object):
                 probs = clf[0].predict_proba(x_unlabeled)
                 scores = 1 - np.amax(probs, axis=1)
 
+            elif strategy == 'BvsSB':  # uncertainty -- least confident
+                probs = clf[0].predict_proba(x_unlabeled)
+                probs.sort(axis=-1)
+                scores = np.apply_along_axis(lambda x:x[-2]-x[-1], 1, probs)
+
             elif strategy == 'entropy':  # uncertainty -- entropy
                 probs = clf[0].predict_proba(x_unlabeled)
                 scores = np.apply_along_axis(entropy, 1, probs)
 
             elif strategy == 'average_kl_divergence':  # query_by_committee -- average_kl_divergence
-                preds = []
+                probs = []
                 for model in clf:
                     model.fit(x_labeled, y_labeled)
-                    preds.append(model.predict_proba(x_unlabeled))
-                consensus = np.mean(np.stack(preds), axis=0)
-                divergence = [entropy(consensus.T, y_out.T) for y_out in preds]
+                    probs.append(model.predict_proba(x_unlabeled))
+                consensus = np.mean(np.stack(probs), axis=0)
+                divergence = [entropy(consensus.T, y_out.T) for y_out in probs]
                 scores = np.apply_along_axis(np.mean, 0, np.stack(divergence))
 
             elif strategy == 'centers_confidence':  # uncertainty -- least confident, using clustering, distance as measurement

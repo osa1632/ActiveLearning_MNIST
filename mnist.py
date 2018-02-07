@@ -31,8 +31,12 @@ def main():
     '''
 
 
-    sampling_methods = { 'random': (0, 0),'average_kl_divergence': (1, None), 'least_confident': (0, 1),
-                         'centers_confidence_pca': (0, 0) }
+    sampling_methods = { 'random': (0, 0),
+                         'average_kl_divergence': (1, None),
+                        # 'least_confident': (0, 1),
+                            'BvsSB': (0, 1),
+                         'centers_confidence_pca': (0, 0)
+                             }
 
     num_queries_list_acc = [int(ii) for ii in np.linspace(50,500,4)]
     if DEBUG:
@@ -42,8 +46,8 @@ def main():
     for ii in range(1, len(num_queries_list_acc)):
         num_queries_list += [num_queries_list_acc[ii] - num_queries_list_acc[ii - 1]]
 
-    committee_numbers = [5,10,21]
-    iter_num = 10
+    committee_numbers = [11]
+    iter_num = 5
     classifier_types = ['LR','CNN']
 
     if DEBUG:
