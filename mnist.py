@@ -31,7 +31,8 @@ def main():
     '''
 
 
-    sampling_methods = { 'random': (0, 0),
+    sampling_methods = {
+        'random': (0, 0),
                          'average_kl_divergence': (1, None),
                         # 'least_confident': (0, 1),
                             'BvsSB': (0, 1),
@@ -46,7 +47,7 @@ def main():
     for ii in range(1, len(num_queries_list_acc)):
         num_queries_list += [num_queries_list_acc[ii] - num_queries_list_acc[ii - 1]]
 
-    committee_numbers = [11]
+    committee_number = 11
     iter_num = 5
     classifier_types = ['LR','CNN']
 
@@ -56,11 +57,10 @@ def main():
     simulation = Simulation(sampling_methods, num_queries_list, iter_num, data_name='MNIST original')
 
     for classifier_type in classifier_types:
-        for committee_number in committee_numbers:
-            plt_name = 'MNIST {0} iter_num:{1} classifier_type:{2} committee_number:{3}{4}.jpg'.format('all', iter_num,
+        plt_name = 'MNIST {0} iter_num:{1} classifier_type:{2} committee_number:{3}{4}.jpg'.format('all', iter_num,
                                                                                                 classifier_type,
                                                                                                 committee_number,' Debug'*DEBUG)
-            simulation.simulate(plt_name=plt_name, classifier_type=classifier_type, committee_number=committee_number)
+        simulation.simulate(plt_name=plt_name, classifier_type=classifier_type, committee_number=committee_number)
 
 
 if __name__ == '__main__':

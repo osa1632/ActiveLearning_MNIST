@@ -70,21 +70,15 @@ class ActiveLearning(object):
                 scores = np.std(classes, axis=0)
 
             elif strategy == 'centers_confidence_pca':  # uncertainty -- least confident, using clustering, distance as measurement
-                if not hasattr(self,'pca'):
-                    x = np.concatenate((x_labeled, x_unlabeled)).T
-                    xmean = np.mean(x)
-                    x = [a - xmean for a in x]
-                    u, _, _ = np.linalg.svd(x,full_matrices=False)
-                    u_pca = (np.transpose(u)[0:20][0])
-                    del u
-                    self.pca = lambda data: np.dot(u_pca, data)
+
+                pca=ActiveLearning.get_pca(x_labeled, x_unlabeled)
 
                 opt_centroids = [x_labeled[y_labeled == k] for k in np.unique(y_labeled)]
                 classes = []
                 for _ in range(self.committee_number):
                     centroids = [random.choice(a) for a in opt_centroids]
                     classes.append(np.array(
-                        [np.argmin([np.dot(self.pca((x_i - y_k).T), self.pca((x_i - y_k).T))
+                        [np.argmin([np.dot(pca((x_i - y_k).T), pca((x_i - y_k).T))
                                     for y_k in centroids]) for x_i in x_unlabeled]))
                 scores = np.std(classes, axis=0)
 
@@ -95,23 +89,28 @@ class ActiveLearning(object):
                 scores = (np.min(distances_x_unlabeld, axis=1))
 
             elif strategy == 'centers_distances_pca':  # uncertainty -- least confident, using clustering, distance as measurement
-                if not hasattr(self,'pca'):
-                    x = np.concatenate((x_labeled, x_unlabeled)).T
-                    xmean = np.mean(x)
-                    x = [a - xmean for a in x]
-                    u, _, _ = np.linalg.svd(x,full_matrices=False)
-                    u_pca = (np.transpose(u)[0:20][0])
-                    del u
-                    self.pca = lambda data: np.dot(u_pca, data)
 
+                pca=ActiveLearning.get_pca(x_labeled, x_unlabeled)
                 centroids = [x_labeled[y_labeled == k].mean(axis=0) for k in np.unique(y_labeled)]
                 distances_x_unlabeld = np.array(
-                    [[np.dot(self.pca((x_i - y_k).T), self.pca((x_i - y_k).T))
+                    [[np.dot(pca((x_i - y_k).T), pca((x_i - y_k).T))
                                     for y_k in centroids] for x_i in x_unlabeled])
                 scores = (np.min(distances_x_unlabeld, axis=1))
 
             idx = np.argsort(-scores)  # reversed
         return idx[:num_queries]
+
+    @staticmethod
+    def get_pca(x_labeled, x_unlabeled):
+        if not hasattr(ActiveLearning.get_pca, 'pca'):
+            x = np.concatenate((x_labeled, x_unlabeled)).T
+            xmean = np.mean(x)
+            x = [a - xmean for a in x]
+            u, _, _ = np.linalg.svd(x, full_matrices=False)
+            u_pca = (np.transpose(u)[0:20][0])
+            del u
+            ActiveLearning.get_pca.pca = lambda data: np.dot(u_pca, data)
+        return ActiveLearning.get_pca.pca
 
     def sample_and_check_performance(self, x_labeled, x_test, x_unlabeled, y_labeled, y_test, y_oracle,
                                      num_queries, strategy):
