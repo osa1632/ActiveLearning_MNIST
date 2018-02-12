@@ -135,12 +135,28 @@ class ActiveLearning(object):
 
     @staticmethod
     def multiclass_performance(y, preds, classes):
-        tp = np.array([np.sum(np.logical_and(y == c, preds == c)) for c in classes])
-        tn = np.array([np.sum(np.logical_and(y != c, preds != c)) for c in classes])
-        fp = np.array([np.sum(np.logical_and(y != c, preds == c)) for c in classes])
-        fn = np.array([np.sum(np.logical_and(y == c, preds != c)) for c in classes])
+        '''see: https://stackoverflow.com/questions/47899463/how-to-extract-false-positive-false-negative-from-a-confusion-matrix-of-multicl'''
+        cfm = np.matrix([[np.sum(np.logical_and(y==c_y, preds==c_pred)) for c_pred in classes] for c_y in classes])
+        tp = np.diag(cfm)
 
-        accuracy, precision, recall = np.mean((tp + tn) / (tp + tn + fp + fn + 0.01)), np.mean(tp / (tp + fp + 0.01)), \
+        fp = []
+        for ii in classes.astype('uint8'):
+            fp.append(np.sum(cfm[:, ii]) - cfm[ii,ii])
+        fp = np.array(fp)
+
+        fn = []
+        for ii in classes.astype('uint8'):
+            fn.append(np.sum(cfm[ii, :]) - cfm[ii,ii])
+        fn = np.array(fn)
+
+        tn = []
+        for ii in classes.astype('uint8'):
+            temp = np.delete(cfm, ii, 0)  # delete ith row
+            temp = np.delete(temp, ii, 1)  # delete ith column
+            tn.append(np.sum(np.sum(temp)))
+        tn = np.array(tn)
+
+        accuracy, precision, recall = np.mean((tp + tn) / np.mean(tp + tn + fp + fn + 0.01)), np.mean(tp / (tp + fp + 0.01)), \
                                       np.mean(tp / (tp + tn + 0.01))
         # print confusion_matrix(y, preds)
 
