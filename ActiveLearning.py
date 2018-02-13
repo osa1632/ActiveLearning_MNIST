@@ -42,7 +42,7 @@ class ActiveLearning(object):
                 probs = clf[0].predict_proba(x_unlabeled)
                 scores = 1 - np.amax(probs, axis=1)
 
-            elif strategy == 'BvsSB':  # uncertainty -- least confident
+            elif strategy == 'BvsSB':  # uncertainty -- Best vs Second Best
                 probs = clf[0].predict_proba(x_unlabeled)
                 probs.sort(axis=-1)
                 scores = np.apply_along_axis(lambda x:x[-2]-x[-1], 1, probs)
@@ -60,27 +60,30 @@ class ActiveLearning(object):
                 divergence = [entropy(consensus.T, y_out.T) for y_out in probs]
                 scores = np.apply_along_axis(np.mean, 0, np.stack(divergence))
 
+
             elif strategy == 'centers_confidence':  # uncertainty -- least confident, using clustering, distance as measurement
-                opt_centroids = [x_labeled[y_labeled == k] for k in np.unique(y_labeled)]
-                classes = []
-
-                centroids = [random.choice(a) for a in opt_centroids]
-                classes.append(np.array(
-                    [np.argmin([np.dot(x_i - y_k, x_i - y_k) for y_k in centroids]) for x_i in x_unlabeled]))
-                scores = np.std(classes, axis=0)
-
-            elif strategy == 'centers_confidence_pca':  # uncertainty -- least confident, using clustering, distance as measurement
-
-                pca=ActiveLearning.get_pca(x_labeled, x_unlabeled)
-
-                opt_centroids = [x_labeled[y_labeled == k] for k in np.unique(y_labeled)]
+                opt_centroids = [np.array([np.reshape(x,(784,-1)) for x,y in zip(x_labeled,y_labeled) if y == k]) for k in np.unique(y_labeled)]
                 classes = []
                 for _ in range(self.committee_number):
-                    centroids = [random.choice(a) for a in opt_centroids]
+                    centroids = [np.mean(a[np.random.choice(a.shape[0],min(20,a.shape[0]),replace=False),:,:],axis=0) for a in opt_centroids]
                     classes.append(np.array(
-                        [np.argmin([np.dot(pca((x_i - y_k).T), pca((x_i - y_k).T))
-                                    for y_k in centroids]) for x_i in x_unlabeled]))
-                scores = np.std(classes, axis=0)
+                        [np.argmin([np.dot(((x_i - y_k).T), ((x_i - y_k).T))
+                                    for y_k in centroids]) for e,x_i in enumerate(x_unlabeled)]))
+                scores = np.apply_along_axis(lambda x:len(np.unique(x)),axis=0,arr=classes)
+
+            elif strategy == 'centers_confidence_pca':  # uncertainty -- least confident, using clustering, distance as measurement using pca
+
+                pca=ActiveLearning.get_pca(x_labeled, x_unlabeled)
+                x_unlabeled_pca = [pca(x_i) for x_i in x_unlabeled]
+                opt_centroids = [np.array([np.reshape(x,(784,-1)) for x,y in zip(x_labeled,y_labeled) if y == k]) for k in np.unique(y_labeled)]
+                classes = []
+                for _ in range(3):
+                     centroids = [np.mean(pca(a[np.random.choice(a.shape[0],min(3,a.shape[0]),replace=False),:,:]),axis=1) for a in opt_centroids]
+                     classes.append(
+                         np.array([np.argmin(
+                             [np.dot((x_i - np.reshape(y_k,(-1,))).T, (x_i - np.reshape(y_k,(-1,)))) for y_k in centroids])
+                                   for e,x_i in enumerate(x_unlabeled_pca)]))
+                scores = np.apply_along_axis(lambda x:-len(np.unique(x)),axis=0,arr=classes)
 
             elif strategy == 'centers_distances':  # uncertainty -- least confident, using clustering, distance as measurement
                 centroids = [x_labeled[y_labeled == k].mean(axis=0) for k in np.unique(y_labeled)]
@@ -97,6 +100,25 @@ class ActiveLearning(object):
                                     for y_k in centroids] for x_i in x_unlabeled])
                 scores = (np.min(distances_x_unlabeld, axis=1))
 
+            elif strategy == 'centers_confidence_pca_least_confident':  # uncertainty -- least confident, using clustering, distance as measurement using pca
+
+                pca=ActiveLearning.get_pca(x_labeled, x_unlabeled)
+                x_unlabeled_pca = [pca(x_i) for x_i in x_unlabeled]
+                opt_centroids = [np.array([np.reshape(x,(784,-1)) for x,y in zip(x_labeled,y_labeled) if y == k]) for k in np.unique(y_labeled)]
+                classes = []
+                for _ in range(3):
+                     centroids = [np.mean(pca(a[np.random.choice(a.shape[0],min(3,a.shape[0]),replace=False),:,:]),axis=1) for a in opt_centroids]
+                     classes.append(
+                         np.array([np.argmin(
+                             [np.dot((x_i - np.reshape(y_k,(-1,))).T, (x_i - np.reshape(y_k,(-1,)))) for y_k in centroids])
+                                   for e,x_i in enumerate(x_unlabeled_pca)]))
+                scores = np.apply_along_axis(lambda x:len(np.unique(x)),axis=0,arr=classes)
+                idx = np.argsort(scores) [:num_queries*2]
+
+                probs = clf[0].predict_proba(x_unlabeled[idx,:])
+                # scores = np.apply_along_axis(entropy, 1, probs)
+                scores = 1 - np.amax(probs, axis=1)
+
             idx = np.argsort(-scores)  # reversed
         return idx[:num_queries]
 
@@ -107,7 +129,7 @@ class ActiveLearning(object):
             xmean = np.mean(x)
             x = [a - xmean for a in x]
             u, _, _ = np.linalg.svd(x, full_matrices=False)
-            u_pca = (np.transpose(u)[0:20][0])
+            u_pca = (np.transpose(u)[0:50])
             del u
             ActiveLearning.get_pca.pca = lambda data: np.dot(u_pca, data)
         return ActiveLearning.get_pca.pca

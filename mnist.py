@@ -3,7 +3,7 @@ from __future__ import unicode_literals, division
 import numpy as np
 from Simulation import Simulation
 from configure import DEBUG
-
+import warnings
 
 
 def main():
@@ -29,15 +29,16 @@ def main():
             MLP - Fully connected (one hiden layer)
             CNN - 2 Conv. layeers (3x3 kernel, stride 1, relu), max-poling, 1 Fully connected ('relu'), soft-max layer
     '''
-
+    warnings.filterwarnings("ignore")
 
     sampling_methods = {
         'random': (0, 0),
                          'average_kl_divergence': (1, None),
-                        # 'least_confident': (0, 1),
+                        'least_confident': (0, 1),
                             'BvsSB': (0, 1),
-                         'centers_confidence_pca': (0, 0)
-                             }
+                         'centers_confidence_pca': (0, 0),
+        'centers_confidence_pca_least_confident': (0,1),
+    }
 
     num_queries_list_acc = [int(ii) for ii in np.linspace(50,500,4)]
     if DEBUG:
