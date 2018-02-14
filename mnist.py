@@ -38,9 +38,11 @@ def main():
                             'BvsSB': (0, 1),
                          'centers_confidence_pca': (0, 0),
         'centers_confidence_pca_least_confident': (0,1),
+        'centers_confidence_pca_average_kl_divergence': (1,None),
+
     }
 
-    num_queries_list_acc = [int(ii) for ii in np.linspace(50,500,4)]
+    num_queries_list_acc = [int(ii) for ii in np.linspace(50,500,21)]
     if DEBUG:
         num_queries_list_acc = [50, 100, 200]
 

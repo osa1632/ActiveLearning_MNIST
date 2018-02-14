@@ -119,6 +119,29 @@ class ActiveLearning(object):
                 # scores = np.apply_along_axis(entropy, 1, probs)
                 scores = 1 - np.amax(probs, axis=1)
 
+            elif strategy == 'centers_confidence_pca_average_kl_divergence':  # uncertainty -- least confident, using clustering, distance as measurement using pca
+
+                pca=ActiveLearning.get_pca(x_labeled, x_unlabeled)
+                x_unlabeled_pca = [pca(x_i) for x_i in x_unlabeled]
+                opt_centroids = [np.array([np.reshape(x,(784,-1)) for x,y in zip(x_labeled,y_labeled) if y == k]) for k in np.unique(y_labeled)]
+                classes = []
+                for _ in range(3):
+                     centroids = [np.mean(pca(a[np.random.choice(a.shape[0],min(3,a.shape[0]),replace=False),:,:]),axis=1) for a in opt_centroids]
+                     classes.append(
+                         np.array([np.argmin(
+                             [np.dot((x_i - np.reshape(y_k,(-1,))).T, (x_i - np.reshape(y_k,(-1,)))) for y_k in centroids])
+                                   for e,x_i in enumerate(x_unlabeled_pca)]))
+                scores = np.apply_along_axis(lambda x:len(np.unique(x)),axis=0,arr=classes)
+                idx = np.argsort(scores) [:num_queries*2]
+
+                probs = []
+                for model in clf:
+                    model.fit(x_labeled, y_labeled)
+                    probs.append(model.predict_proba(x_unlabeled[idx,:]))
+                consensus = np.mean(np.stack(probs), axis=0)
+                divergence = [entropy(consensus.T, y_out.T) for y_out in probs]
+                scores = -np.apply_along_axis(np.mean, 0, np.stack(divergence))
+
             idx = np.argsort(-scores)  # reversed
         return idx[:num_queries]
 

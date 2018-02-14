@@ -25,9 +25,9 @@ class Simulation(object):
                 color_g = 0.0
                 style = '-'
             plt.subplot(131)
-            plt.plot(num_queries_list, self.results[strategy]['accuracy'], color=(0.0, color_g, color_b),linestyle=style)
+            plt.plot(num_queries_list[1:], self.results[strategy]['accuracy'][1:], color=(0.0, color_g, color_b),linestyle=style)
             plt.subplot(133)
-            plt.plot(num_queries_list, self.results[strategy]['precision'], color=(0.0, color_g, color_b),linestyle=style)
+            plt.plot(num_queries_list[1:], self.results[strategy]['precision'][1:], color=(0.0, color_g, color_b),linestyle=style)
         plt.subplot(131)
         plt.ylabel('Accuracy')
         plt.xlabel('Number of Queries')
